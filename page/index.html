@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>小炉子</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+--base:#FFF9F5;
+--raised:#FFFFFF;
+--tint:#FFF0E8;
+--ink:#3D3229;
+--ink-2:#8C7B6B;
+--faint:#B8A99A;
+--rose:#E8788A;
+--rose-soft:#FDEEF0;
+--sage:#7BA88A;
+--sage-soft:#EDF5EF;
+--lav:#A78BC4;
+--lav-soft:#F3EFF8;
+--line:#F0E6DD;
+--bad:#D45B5B;
+--sh:0 1px 3px rgba(61,50,41,0.05);
+--sh-2:0 4px 16px rgba(61,50,41,0.08);
+}
+html,body{height:100%}
+body{
+background:var(--base);color:var(--ink);
+font-family:"Noto Sans SC",system-ui,-apple-system,"PingFang SC",sans-serif;
+font-size:14px;line-height:1.75;font-weight:400;
+-webkit-font-smoothing:antialiased;
+}
+.serif{font-family:"Noto Serif SC",Georgia,"Songti SC",serif;font-weight:600;letter-spacing:0.04em}
+.mono{font-family:"SF Mono",ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}
+
+/* ---------- 门 ---------- */
+#gate{
+position:fixed;inset:0;z-index:30;background:var(--base);
+display:flex;flex-direction:column;align-items:center;justify-content:center;
+padding:0 28px;gap:0;
+transition:opacity 0.55s ease,transform 0.55s ease;
+}
+#gate.out{opacity:0;transform:scale(0.98);pointer-events:none}
+.mug{position:relative;width:104px;height:104px;margin-bottom:22px}
+.mug-body{
+position:absolute;left:12px;right:12px;bottom:0;height:72px;
+background:var(--raised);border:2px solid var(--line);border-radius:14px 14px 26px 26px;
+box-shadow:var(--sh);overflow:hidden;
+}
+.mug-body::after{
+content:'';position:absolute;left:0;right:0;bottom:0;height:44%;
+background:var(--rose-soft);border-radius:0 0 22px 22px;
+animation:sip 4s ease-in-out infinite;
+}
+@keyframes sip{0%,100%{height:44%}50%{height:52%}}
+.mug-ear{
+position:absolute;right:-2px;bottom:22px;width:22px;height:26px;
+border:2px solid var(--line);border-left:none;border-radius:0 12px 12px 0;
+}
+.steam{position:absolute;left:0;right:0;top:0;height:34px}
+.steam i{
+position:absolute;bottom:0;width:5px;height:5px;border-radius:50%;
+background:var(--faint);opacity:0;
+animation:puff 3.2s ease-in-out infinite;
+}
+.steam i:nth-child(1){left:34px;animation-delay:0s}
+.steam i:nth-child(2){left:50px;animation-delay:0.9s}
+.steam i:nth-child(3){left:64px;animation-delay:1.8s}
+@keyframes puff{0%{opacity:0;transform:translateY(6px) scale(0.6)}35%{opacity:0.5}100%{opacity:0;transform:translateY(-26px) scale(1.3)}}
+.gate-name{font-size:30px;margin-bottom:6px}
+.gate-sub{font-size:13px;color:var(--ink-2);margin-bottom:26px;text-align:center}
+.gate-input{
+width:100%;max-width:290px;background:var(--raised);border:1px solid var(--line);
+border-radius:12px;padding:13px 16px;font-size:16px;letter-spacing:0.18em;
+color:var(--ink);outline:none;text-align:center;
+font-family:"SF Mono",ui-monospace,Menlo,monospace;
+transition:border-color 0.22s ease,box-shadow 0.22s ease;
+}
+.gate-input::placeholder{color:var(--faint);letter-spacing:0.16em}
+.gate-input:focus{border-color:var(--rose);box-shadow:0 0 0 3px var(--rose-soft)}
+.gate-go{
+width:100%;max-width:290px;margin-top:12px;height:44px;
+background:var(--rose);color:#fff;border:none;border-radius:12px;
+font-size:14px;font-weight:500;letter-spacing:0.08em;cursor:pointer;
+box-shadow:0 2px 10px rgba(232,120,138,0.28);
+transition:transform 0.2s ease,box-shadow 0.22s ease,filter 0.2s ease;
+}
+.gate-go:active{transform:translateY(1px) scale(0.985);filter:brightness(0.95)}
+
+/* ---------- 主页 ---------- */
+#room{display:none;min-height:100dvh;flex-direction:column;padding:20px 16px 32px;gap:12px}
+#room.on{display:flex}
+#room>*{animation:up 0.5s ease both}
+#room>*:nth-child(1){animation-delay:0.02s}
+#room>*:nth-child(2){animation-delay:0.08s}
+#room>*:nth-child(3){animation-delay:0.14s}
+#room>*:nth-child(4){animation-delay:0.2s}
+#room>*:nth-child(5){animation-delay:0.26s}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.head{display:flex;align-items:center;justify-content:space-between;padding:2px 6px 4px}
+.head-l{display:flex;align-items:baseline;gap:8px}
+.head-t{font-size:19px}
+.chip{
+font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;
+background:var(--sage-soft);color:var(--sage);letter-spacing:0.06em;
+}
+.clock{font-size:12px;color:var(--faint);letter-spacing:0.06em}
+
+/* 炉子卡：signature */
+.card{
+background:var(--raised);border:1px solid var(--line);border-radius:20px;
+box-shadow:var(--sh);overflow:hidden;
+}
+.stove{padding:24px 22px 20px;display:flex;align-items:center;gap:20px}
+.pot{position:relative;width:112px;height:112px;flex-shrink:0}
+.pot-lid{
+position:absolute;left:6px;right:6px;top:16px;height:12px;
+background:var(--tint);border:2px solid var(--line);border-radius:10px;
+transition:transform 0.5s cubic-bezier(0.32,0.72,0,1);
+}
+.pot-knob{
+position:absolute;left:50%;top:8px;width:14px;height:9px;margin-left:-7px;
+background:var(--tint);border:2px solid var(--line);border-radius:8px 8px 3px 3px;
+transition:transform 0.5s cubic-bezier(0.32,0.72,0,1);
+}
+.pot-body{
+position:absolute;left:8px;right:8px;top:26px;bottom:16px;
+background:var(--raised);border:2px solid var(--line);border-radius:12px 12px 30px 30px;
+overflow:hidden;
+}
+.soup{
+position:absolute;left:0;right:0;bottom:0;height:46%;
+background:linear-gradient(180deg,var(--rose-soft),#FBE3E7);
+transition:height 0.6s cubic-bezier(0.32,0.72,0,1);
+}
+.soup::before{
+content:'';position:absolute;left:-30%;right:-30%;top:-7px;height:14px;
+background:radial-gradient(ellipse at 50% 100%,#FBE3E7 60%,transparent 61%);
+animation:wave 3.4s ease-in-out infinite;
+}
+@keyframes wave{0%,100%{transform:translateX(-6%)}50%{transform:translateX(6%)}}
+.bub{position:absolute;left:0;right:0;bottom:0;height:46%;pointer-events:none}
+.bub i{
+position:absolute;bottom:4px;width:7px;height:7px;border-radius:50%;
+background:rgba(255,255,255,0.85);opacity:0;
+}
+.pot.live .bub i{animation:rise 1.5s ease-in infinite}
+.bub i:nth-child(1){left:22%;animation-delay:0s}
+.bub i:nth-child(2){left:44%;width:5px;height:5px;animation-delay:0.4s}
+.bub i:nth-child(3){left:64%;animation-delay:0.8s}
+.bub i:nth-child(4){left:34%;width:4px;height:4px;animation-delay:1.1s}
+@keyframes rise{0%{opacity:0;transform:translateY(0) scale(0.6)}30%{opacity:0.9}100%{opacity:0;transform:translateY(-30px) scale(1.15)}}
+.fire{position:absolute;left:50%;bottom:0;margin-left:-22px;width:44px;height:14px;display:flex;justify-content:center;gap:5px}
+.fire i{
+width:8px;height:8px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;
+background:var(--faint);opacity:0.35;
+transition:background 0.4s ease,opacity 0.4s ease;
+}
+.pot.live .fire i{background:var(--rose);opacity:1;animation:flick 0.7s ease-in-out infinite}
+.fire i:nth-child(2){animation-delay:0.12s!important}
+.fire i:nth-child(3){animation-delay:0.24s!important}
+@keyframes flick{0%,100%{transform:scaleY(1)}50%{transform:scaleY(1.5)}}
+.pot.live .pot-lid{transform:translateY(-3px) rotate(-2deg)}
+.pot.live .pot-knob{transform:translateY(-3px) rotate(-2deg)}
+
+.stove-r{flex:1;min-width:0}
+.heat-tag{
+display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;
+background:var(--rose-soft);color:var(--rose);margin-bottom:8px;
+}
+.heat-n{font-size:40px;line-height:1;letter-spacing:-0.02em}
+.heat-n small{font-size:13px;color:var(--faint);margin-left:4px;letter-spacing:0.06em}
+.heat-w{font-size:12px;color:var(--ink-2);margin-top:8px}
+.heat-bar{margin-top:12px;height:6px;border-radius:20px;background:var(--tint);overflow:hidden}
+.heat-bar b{
+display:block;height:100%;width:0;border-radius:20px;
+background:linear-gradient(90deg,#F3B4BE,var(--rose));
+transition:width 0.6s cubic-bezier(0.32,0.72,0,1);
+}
+
+/* 两行设置 */
+.line{display:flex;align-items:center;gap:12px;padding:16px 18px}
+.line+.line{border-top:1px solid var(--line)}
+.pill{
+width:34px;height:34px;border-radius:12px;flex-shrink:0;
+background:var(--tint);display:flex;align-items:center;justify-content:center;
+transition:background 0.3s ease;
+}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--faint);transition:all 0.35s ease}
+.pill.wait{background:var(--lav-soft)}
+.pill.wait i{background:var(--lav);animation:beat 1.2s ease-in-out infinite}
+.pill.live{background:var(--sage-soft)}
+.pill.live i{background:var(--sage);box-shadow:0 0 0 4px rgba(123,168,138,0.18)}
+.pill.bad{background:#FBECEC}
+.pill.bad i{background:var(--bad)}
+@keyframes beat{50%{opacity:0.3}}
+.line-t{flex:1;min-width:0}
+.line-k{font-size:14px;font-weight:500}
+.line-v{font-size:11.5px;color:var(--ink-2);margin-top:1px;word-break:break-all;line-height:1.5}
+.btn{
+border:1px solid var(--line);background:var(--raised);color:var(--rose);
+font-size:13px;font-weight:500;padding:9px 15px;border-radius:12px;
+cursor:pointer;white-space:nowrap;
+transition:transform 0.2s ease,box-shadow 0.22s ease,color 0.22s ease,border-color 0.22s ease;
+}
+.btn:active{transform:scale(0.96)}
+.btn.fill{background:var(--rose);color:#fff;border-color:var(--rose);box-shadow:0 2px 10px rgba(232,120,138,0.24)}
+.btn.mute{color:var(--ink-2)}
+.btn.ghost{border-color:transparent;color:var(--faint);padding:9px 6px}
+.btn:disabled{opacity:0.45}
+
+/* 厨房记录 */
+.notes{padding:16px 18px 6px}
+.notes-h{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.notes-t{font-size:13px;font-weight:500;color:var(--ink)}
+.notes-c{font-size:11px;color:var(--faint);letter-spacing:0.04em}
+#log{max-height:34vh;overflow-y:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+.n{display:flex;gap:10px;padding:9px 4px;animation:up 0.4s ease both}
+.n+.n{border-top:1px dashed var(--line)}
+.n-t{font-size:11px;color:var(--faint);flex-shrink:0;padding-top:2px;width:50px}
+.n-m{font-size:13px;color:var(--ink-2);line-height:1.6}
+.n-m.ok{color:var(--sage)}
+.n-m.warn{color:#C98A3E}
+.n-m.err{color:var(--bad)}
+.empty{font-size:12.5px;color:var(--faint);padding:10px 4px 14px}
+
+#toast{
+position:fixed;left:16px;right:16px;bottom:20px;z-index:50;
+background:var(--ink);color:#FFF6F0;border-radius:14px;
+padding:13px 16px;font-size:13px;box-shadow:var(--sh-2);
+opacity:0;transform:translateY(10px);pointer-events:none;
+transition:opacity 0.28s ease,transform 0.28s ease;
+}
+#toast.show{opacity:1;transform:none}
+#kaVideo{position:fixed;right:8px;bottom:8px;width:64px;height:36px;border-radius:8px;opacity:0.06;pointer-events:none}
+@media (min-width:640px){
+#room,#gate{max-width:560px;margin:0 auto}
+}
+@media (prefers-reduced-motion:reduce){
+*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+<div class="mug">
+<div class="steam"><i></i><i></i><i></i></div>
+<div class="mug-body"></div>
+<div class="mug-ear"></div>
+</div>
+<div class="gate-name serif">小炉子</div>
+<div class="gate-sub">今天想煮点什么？先报个暗号。</div>
+<input class="gate-input" id="gateInput" type="password" placeholder="暗号" onkeydown="if(event.key==='Enter')checkGate()">
+<button class="gate-go" onclick="checkGate()">进厨房</button>
+</div>
+
+<div id="room">
+<div class="head">
+<div class="head-l"><div class="head-t serif">小炉子</div><div class="chip" id="chip">在煮</div></div>
+<div class="clock mono" id="clock">--:--</div>
+</div>
+
+<div class="card">
+<div class="stove">
+<div class="pot" id="pot">
+<div class="pot-knob"></div>
+<div class="pot-lid"></div>
+<div class="pot-body">
+<div class="soup" id="soup"></div>
+<div class="bub"><i></i><i></i><i></i><i></i></div>
+</div>
+<div class="fire"><i></i><i></i><i></i></div>
+</div>
+<div class="stove-r">
+<div class="heat-tag" id="heatTag">小火</div>
+<div class="heat-n mono" id="heatN">0<small>火候</small></div>
+<div class="heat-w" id="heatW">锅还凉着</div>
+<div class="heat-bar"><b id="heatBar"></b></div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="line">
+<div class="pill" id="connPill"><i></i></div>
+<div class="line-t">
+<div class="line-k" id="connLabel">温度计没连上</div>
+<div class="line-v" id="connDetail">点右边把温度计接上</div>
+</div>
+<button class="btn fill" id="connBtn" onclick="handleConnect()">连接</button>
+</div>
+<div class="line">
+<div class="pill" id="kaPill"><i></i></div>
+<div class="line-t">
+<div class="line-k" id="kaLabel">保温没开</div>
+<div class="line-v" id="kaDetail">开了保温，切出去也不会凉</div>
+</div>
+<button class="btn" id="kaBtn" onclick="toggleKeepalive()">保温</button>
+<button class="btn ghost" id="pipBtn" onclick="openPiP()">小窗</button>
+</div>
+</div>
+
+<div class="card">
+<div class="notes">
+<div class="notes-h">
+<div class="notes-t serif">厨房记录</div>
+<div class="notes-c mono" id="logCount">0 条</div>
+</div>
+<div id="log"><div class="empty" id="logEmpty">还没开火，记录是空的。</div></div>
+</div>
+</div>
+</div>
+
+<audio id="kaAudio" loop playsinline preload="auto" src="/media/silent.m4a"></audio>
+<video id="kaVideo" loop muted playsinline preload="auto" src="/media/blank.mp4"></video>
+<div id="toast"></div>
+
+<script>
+var API_TOKEN='';
+/* ---- 设备协议：改成你自己设备的 UUID 和字节格式 ----
+ * 用 chrome://bluetooth-internals 或 nRF Connect 抓一遍真机的写入包，
+ * 然后照抄进 buildPacket / buildStopPacket。详见 docs/protocol.md
+ */
+var BLE_SERVICE='0000ff10-0000-1000-8000-00805f9b34fb';  // 示例值
+var BLE_TX     ='0000ff12-0000-1000-8000-00805f9b34fb';  // 示例值
+var bleChar=null,bleDevice=null;
+var resendHandle=null,patternHandle=null,stopTimeout=null;
+var currentSeq=0;
+var pollHandle=null,ackHandle=null,connectTime=null;
+var logN=0;
+var kaOn=false,kaTickHandle=null,kaLastTick=0,kaMaxGap=0,kaTicks=0,kaHiddenSince=0,kaBgMaxGap=0;
+
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show')},2600)}
+function nowStr(){var d=new Date();return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+function nowSec(){var d=new Date();return nowStr()+':'+String(d.getSeconds()).padStart(2,'0')}
+setInterval(function(){var c=document.getElementById('clock');if(c)c.textContent=nowStr()},1000);
+
+function addLog(msg,type){
+var e=document.getElementById('logEmpty');if(e)e.remove();
+var list=document.getElementById('log');
+var row=document.createElement('div');row.className='n';
+var t=document.createElement('div');t.className='n-t mono';t.textContent=nowSec();
+var m=document.createElement('div');m.className='n-m'+(type?' '+type:'');m.textContent=msg;
+row.appendChild(t);row.appendChild(m);
+list.insertBefore(row,list.firstChild);
+while(list.children.length>40){list.removeChild(list.lastChild)}
+logN++;document.getElementById('logCount').textContent=logN+' 条';
+}
+
+function checkGate(){
+var v=document.getElementById('gateInput').value;
+fetch('/api/auth?pass='+encodeURIComponent(v))
+.then(function(r){return r.json()})
+.then(function(d){
+if(d.ok){
+API_TOKEN=d.token||'';
+var g=document.getElementById('gate');g.classList.add('out');
+setTimeout(function(){g.style.display='none'},560);
+document.getElementById('room').classList.add('on');
+addLog('进厨房了');
+}else{showToast('暗号不对哦')}
+})
+.catch(function(){showToast('网不太好')});
+}
+
+/* ---- 火候可视化（原 setJelly） ---- */
+function heatWord(s){
+if(s<=0)return['小火','锅还凉着'];
+if(s<20)return['小火','刚冒热气'];
+if(s<40)return['温火','慢慢在滚'];
+if(s<60)return['中火','咕嘟咕嘟'];
+if(s<80)return['大火','要溢出来了'];
+return['猛火','锅盖压不住'];
+}
+function setJelly(speed){
+var pot=document.getElementById('pot');
+var w=heatWord(speed);
+document.getElementById('heatTag').textContent=w[0];
+document.getElementById('heatW').textContent=w[1];
+document.getElementById('heatN').innerHTML=Math.round(speed)+'<small>火候</small>';
+document.getElementById('heatBar').style.width=Math.max(0,Math.min(100,speed))+'%';
+document.getElementById('soup').style.height=(42+speed*0.22)+'%';
+if(speed>0){
+pot.classList.add('live');
+var d=Math.max(0.45,1.7-speed/100*1.25);
+pot.querySelectorAll('.bub i').forEach(function(b){b.style.animationDuration=d+'s'});
+pot.querySelectorAll('.fire i').forEach(function(f){f.style.animationDuration=Math.max(0.3,0.85-speed/100*0.55)+'s'});
+document.getElementById('chip').textContent='在煮';
+}else{
+pot.classList.remove('live');
+document.getElementById('chip').textContent='歇着';
+}
+}
+
+function setConnState(state,label,detail){
+var map={searching:'wait',connecting:'wait',connected:'live',error:'bad'};
+var p=document.getElementById('connPill');
+p.className='pill'+(map[state]?' '+map[state]:'');
+document.getElementById('connLabel').textContent=label||'温度计没连上';
+document.getElementById('connDetail').textContent=detail||'';
+var btn=document.getElementById('connBtn');
+if(state==='connected'){btn.textContent='断开';btn.className='btn mute';btn.disabled=false}
+else if(state==='searching'||state==='connecting'){btn.textContent='连接中';btn.className='btn';btn.disabled=true}
+else{btn.textContent='连接';btn.className='btn fill';btn.disabled=false}
+}
+
+/* ---- BLE 指令（原样未改） ---- */
+function buildPacket(level){
+/* 示例实现：一个字节强度 0-100。
+ * 真机通常是厂商私有格式（定长包 + 校验位 + 位移打包），
+ * 抓包之后把这里替换掉即可，其余代码不用动。 */
+var b=new Uint8Array(1);
+b[0]=Math.max(0,Math.min(100,Math.round(level)));
+return b.buffer;
+}
+
+function buildStopPacket(){
+return buildPacket(0);
+}
+
+function clearAll(){if(resendHandle){clearInterval(resendHandle);resendHandle=null}if(patternHandle){clearInterval(patternHandle);patternHandle=null}if(stopTimeout){clearTimeout(stopTimeout);stopTimeout=null}}
+function sendBLE(buf){if(bleChar)bleChar.writeValue(buf).catch(function(e){addLog('没送出去 '+e.message,'err')})}
+function doStop(){clearAll();sendBLE(buildStopPacket());setJelly(0)}
+
+function doLevel(speed,duration){
+clearAll();
+speed=Math.max(0,Math.min(100,speed));
+var buf=buildPacket(speed);sendBLE(buf);setJelly(speed);
+resendHandle=setInterval(function(){sendBLE(buf)},200);
+if(duration&&duration<900)stopTimeout=setTimeout(function(){doStop()},duration*1000);
+}
+
+function doPattern(speeds,interval,loops){
+clearAll();
+var idx=0,total=speeds.length*loops,currentBuf=buildPacket(speeds[0]);
+function step(){
+if(idx>=total){doStop();return}
+currentBuf=buildPacket(speeds[idx%speeds.length]);sendBLE(currentBuf);
+setJelly(speeds[idx%speeds.length]);idx++}
+step();
+patternHandle=setInterval(step,interval*1000);
+resendHandle=setInterval(function(){sendBLE(currentBuf)},200);
+}
+
+function executeCommand(cmd){
+if(!cmd)return;
+if(cmd.cmd==='stop'){doStop();return}
+if(cmd.cmd==='level'){doLevel(cmd.args.level||20,cmd.args.duration);return}
+if(cmd.cmd==='pattern'){var sp=cmd.args.pattern.split(',').map(function(s){return parseInt(s.trim())});doPattern(sp,cmd.args.interval||0.9,cmd.args.loops||4);return}
+}
+
+function handleConnect(){
+if(bleChar){addLog('自己断开了','warn');try{bleDevice.gatt.disconnect()}catch(e){}return}
+if(!navigator.bluetooth){showToast('这个浏览器不支持');addLog('没有 Web Bluetooth','err');return}
+addLog('在找附近的设备');
+setConnState('searching','找设备','正在找附近的温度计');
+navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[BLE_SERVICE]})
+.then(function(d){
+bleDevice=d;addLog('找到了 '+(d.name||'没名字的设备'),'ok');
+setConnState('connecting','连接中','正在握手');
+d.addEventListener('gattserverdisconnected',onDisconnected);
+return d.gatt.connect();
+})
+.then(function(server){setConnState('connecting','连接中','读服务');return server.getPrimaryService(BLE_SERVICE)})
+.then(function(service){setConnState('connecting','连接中','读通道');return service.getCharacteristic(BLE_TX)})
+.then(function(c){
+bleChar=c;connectTime=Date.now();
+addLog('温度计接上了','ok');
+setConnState('connected','温度计已连上','刚接上');
+startPolling();updateConnDuration();
+})
+.catch(function(e){
+if(e.name==='NotFoundError'){addLog('没选设备','warn');setConnState('','温度计没连上','这次没选设备')}
+else{addLog('连不上 '+(e.message||e.name),'err');setConnState('error','连不上',e.message||e.name)}
+});
+}
+
+function onDisconnected(){
+bleChar=null;clearAll();setJelly(0);
+addLog('温度计掉线了','warn');
+setConnState('','掉线了','点右边重新接一下');
+if(pollHandle){clearInterval(pollHandle);pollHandle=null}
+if(ackHandle){clearInterval(ackHandle);ackHandle=null}
+}
+
+function updateConnDuration(){
+setInterval(function(){
+if(!bleChar||!connectTime)return;
+var s=Math.floor((Date.now()-connectTime)/1000);
+document.getElementById('connDetail').textContent='连着 '+Math.floor(s/60)+'分'+(s%60)+'秒了';
+},1000);
+}
+
+/* ---- 保温（保活） ---- */
+function kaFmt(s){return s<60?(s.toFixed(1)+'秒'):(Math.floor(s/60)+'分'+Math.round(s%60)+'秒')}
+function kaUpdate(){
+var d=document.getElementById('kaDetail');if(!d)return;
+d.textContent='心跳 '+kaTicks+' 次 · 最长断 '+kaFmt(kaMaxGap)+' · 后台断 '+kaFmt(kaBgMaxGap);
+}
+function kaTick(){
+var now=Date.now();
+if(kaLastTick){
+var gap=(now-kaLastTick)/1000;
+if(gap>kaMaxGap)kaMaxGap=gap;
+if(kaHiddenSince&&gap>kaBgMaxGap)kaBgMaxGap=gap;
+}
+kaLastTick=now;kaTicks++;
+if(kaTicks%5===0)kaUpdate();
+}
+
+function toggleKeepalive(){
+var a=document.getElementById('kaAudio'),v=document.getElementById('kaVideo');
+var btn=document.getElementById('kaBtn'),pill=document.getElementById('kaPill'),lb=document.getElementById('kaLabel');
+if(kaOn){
+a.pause();v.pause();kaOn=false;
+if(kaTickHandle){clearInterval(kaTickHandle);kaTickHandle=null}
+btn.textContent='保温';btn.className='btn';
+pill.className='pill';lb.textContent='保温没开';
+addLog('关了保温','warn');return;
+}
+a.volume=1.0;a.muted=false;
+// iOS Safari 上光有 src 属性不会真去加载，必须显式给绝对地址再 load
+if(a.readyState===0){a.src=location.origin+'/media/silent.m4a';a.load()}
+if(v.readyState===0){v.src=location.origin+'/media/blank.mp4';v.load()}
+a.play().then(function(){addLog('保温开着，静音轨在跑','ok')}).catch(function(e){addLog('保温起不来 '+e.message,'err')});
+v.play().catch(function(e){addLog('画面轨起不来 '+e.message,'err')});
+kaOn=true;kaLastTick=0;kaTickHandle=setInterval(kaTick,1000);
+startVFC();
+// 开了保温就自动进小窗，PiP 是唯一能让 JS 在后台持续跑的路
+setTimeout(function(){autoPiP()},400);
+btn.textContent='关保温';btn.className='btn mute';
+pill.className='pill live';lb.textContent='保温开着';
+kaUpdate();
+}
+
+function autoPiP(){
+var v=document.getElementById('kaVideo');
+try{
+if(v.webkitSetPresentationMode&&v.webkitPresentationMode!=='picture-in-picture'){v.webkitSetPresentationMode('picture-in-picture');addLog('自动开了小窗','ok');return}
+if(v.requestPictureInPicture&&!document.pictureInPictureElement){v.requestPictureInPicture().then(function(){addLog('自动开了小窗','ok')}).catch(function(e){addLog('小窗要手点一下 '+e.message,'warn')})}
+}catch(e){addLog('小窗要手点一下','warn')}
+}
+
+function openPiP(){
+var v=document.getElementById('kaVideo');
+if(!kaOn){showToast('先开保温');return}
+try{
+if(v.webkitSetPresentationMode){v.webkitSetPresentationMode('picture-in-picture');addLog('开了小窗','ok')}
+else if(v.requestPictureInPicture){v.requestPictureInPicture().then(function(){addLog('开了小窗','ok')}).catch(function(e){addLog('小窗没开成 '+e.message,'err')})}
+else{showToast('这个浏览器不支持小窗')}
+}catch(e){addLog('小窗出错 '+e.message,'err')}
+}
+
+document.addEventListener('visibilitychange',function(){
+if(document.hidden){kaHiddenSince=Date.now()}
+else{
+var away=kaHiddenSince?(Date.now()-kaHiddenSince)/1000:0;
+var a=document.getElementById('kaAudio');
+addLog('回来了 出去'+kaFmt(away)+' 后台最长断'+kaFmt(kaBgMaxGap)+' 保温'+(a.paused?'停了':'还在'),a.paused?'err':'ok');
+kaHiddenSince=0;kaUpdate();
+}
+});
+
+/* ---- 指令轮询：用视频帧驱动，切后台 setInterval 会被冻，rVFC 跟着解码走 ---- */
+var lastPollAt=0,lastAckAt=0,vfcOn=false;
+function pumpFromVideo(){
+var now=Date.now();
+if(bleChar&&now-lastPollAt>=1000){lastPollAt=now;pollCommands()}
+if(bleChar&&now-lastAckAt>=3000){lastAckAt=now;sendAck()}
+}
+function startVFC(){
+var v=document.getElementById('kaVideo');
+if(vfcOn||!v.requestVideoFrameCallback)return;
+vfcOn=true;
+function loop(){pumpFromVideo();try{v.requestVideoFrameCallback(loop)}catch(e){vfcOn=false}}
+try{v.requestVideoFrameCallback(loop)}catch(e){vfcOn=false}
+}
+function startPolling(){
+pollHandle=setInterval(pollCommands,1000);
+ackHandle=setInterval(sendAck,3000);
+sendAck();
+startVFC();
+}
+function pollCommands(){
+kaTick();
+lastPollAt=Date.now();
+fetch('/api/poll?token='+API_TOKEN)
+.then(function(r){return r.json()})
+.then(function(d){if(d.now&&d.now.seq>currentSeq){currentSeq=d.now.seq;executeCommand(d.now)}})
+.catch(function(e){});
+}
+function sendAck(){fetch('/api/ack?token='+encodeURIComponent(API_TOKEN),{method:'POST'}).catch(function(e){})}
+</script>
+</body>
+</html>

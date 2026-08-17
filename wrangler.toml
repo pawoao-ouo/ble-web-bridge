@@ -1,0 +1,23 @@
+name = "ble-web-bridge"
+main = "worker/worker.js"
+compatibility_date = "2024-09-01"
+
+# scripts/setup.sh 会把创建好的 database_id 填进来
+[[d1_databases]]
+binding = "DB"
+database_name = "ble_bridge"
+database_id = "PUT_YOUR_D1_ID_HERE"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "PUT_YOUR_KV_ID_HERE"
+
+# 让 worker.js 能 import page.html 当字符串
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = false
+
+# GATE_PASS / API_TOKEN 用 secret，不写在这里：
+#   wrangler secret put GATE_PASS
+#   wrangler secret put API_TOKEN
